@@ -41,102 +41,7 @@ local function createPlayerESP(player)
     player.CharacterAdded:Connect(setupCharacter)
 end
 
--- COMPUTER ESP
-local function createComputerESP(computer)
-    if ComputerESP[computer] then return end
-
-    local highlight = Instance.new("Highlight")
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Adornee = computer
-    highlight.Parent = computer
-
-    highlight.FillColor = Color3.fromRGB(0, 100, 255) -- AZUL
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.Enabled = ESPEnabled
-
-    ComputerESP[computer] = { Highlight = highlight }
-end
-
--- TOGGLE ESP
-local function setESP(state)
-    ESPEnabled = state
-
-    for _, v in pairs(ESPObjects) do
-        if v.Highlight then
-            v.Highlight.Enabled = state
-        end
-    end
-
-    for _, v in pairs(ComputerESP) do
-        if v.Highlight then
-            v.Highlight.Enabled = state
-        end
-    end
-end
-
--- PLAYERS EXISTENTES
-for _, p in pairs(Players:GetPlayers()) do
-    if p ~= LocalPlayer then
-        createPlayerESP(p)
-    end
-end
-
-Players.PlayerAdded:Connect(function(p)
-    if p ~= LocalPlayer then
-        createPlayerESP(p)
-    end
-end)
-
-Players.PlayerRemoving:Connect(function(p)
-    if ESPObjects[p] and ESPObjects[p].Highlight then
-        ESPObjects[p].Highlight:Destroy()
-    end
-    ESPObjects[p] = nil
-end)
-
--- COMPUTADORES EXISTENTES
-for _, obj in pairs(Workspace:GetDescendants()) do
-    if obj.Name == "ComputerTable" then
-        createComputerESP(obj)
-    end
-end
-
-Workspace.DescendantAdded:Connect(function(obj)
-    if obj.Name == "ComputerTable" then
-        createComputerESP(obj)
-    end
-end)
-
--- DETECTA INÍCIO DO JOGO + FERA
-RunService.RenderStepped:Connect(function()
-    if not GameStarted then
-        local gv = Workspace:FindFirstChild("GameValues")
-        if gv and gv:FindFirstChild("TimeUntilGame") then
-            if gv.TimeUntilGame.Value <= 0 then
-                GameStarted = true
-            end
-        end
-    end
-
-    if GameStarted and not FeraMarked then
-        FeraMarked = true
-
-        task.delay(5, function()
-            for player, data in pairs(ESPObjects) do
-                local role = player:FindFirstChild("Role")
-                if role and role:IsA("StringValue") then
-                    if role.Value == "Beast" and data.Highlight then
-                        data.Highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                    end
-                end
-            end
-        end)
-    end
-end)
-
-ocal Players = game:GetService("Players")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -282,6 +187,44 @@ local function reloadComputers()
 end
 
 reloadComputers()
+
+-- TOGGLE ESP
+local function setESP(state)
+    ESPEnabled = state
+
+    for _, v in pairs(ESPObjects) do
+        if v.Highlight then
+            v.Highlight.Enabled = state
+        end
+    end
+
+    for _, v in pairs(ComputerESP) do
+        if v.Highlight then
+            v.Highlight.Enabled = state
+        end
+    end
+end
+
+-- PLAYERS EXISTENTES
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then
+        createPlayerESP(p)
+    end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    if p ~= LocalPlayer then
+        createPlayerESP(p)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+    if ESPObjects[p] and ESPObjects[p].Highlight then
+        ESPObjects[p].Highlight:Destroy()
+    end
+    ESPObjects[p] = nil
+end)
+
 -- GUI BOTÃO INVISÍVEL
 local gui = Instance.new("ScreenGui")
 gui.Parent = game:GetService("CoreGui")
@@ -300,12 +243,4 @@ btn.Text = ""
 
 btn.MouseButton1Click:Connect(function()
     setESP(not ESPEnabled)
-end)
-
--- TECLA F4
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.F4 then
-        setESP(not ESPEnabled)
-    end
 end)
